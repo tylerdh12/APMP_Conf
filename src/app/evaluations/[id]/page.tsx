@@ -11,25 +11,23 @@ interface EvaluationPageProps {
 export default async function EvaluationPage({
 	params,
 }: EvaluationPageProps) {
-	try {
-		const [evaluation, service, rubric] = await Promise.all(
-			[
-				apiClient.getEvaluation(params.id),
-				apiClient.getService(params.id),
-				apiClient.getRubric(params.id),
-			]
-		);
+	const [evaluation, service, rubric] = await Promise.all([
+		apiClient.getEvaluation(params.id),
+		apiClient.getService(params.id),
+		apiClient.getRubric(params.id),
+	]);
 
-		return (
-			<div className='container py-6'>
-				<EvaluationDetail
-					evaluation={evaluation}
-					service={service}
-					rubric={rubric}
-				/>
-			</div>
-		);
-	} catch (error) {
+	if (!evaluation || !service || !rubric) {
 		notFound();
 	}
+
+	return (
+		<div className='container py-6'>
+			<EvaluationDetail
+				evaluation={evaluation}
+				service={service}
+				rubric={rubric}
+			/>
+		</div>
+	);
 }

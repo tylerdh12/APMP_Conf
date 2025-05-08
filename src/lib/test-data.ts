@@ -1,190 +1,268 @@
-import { Service, Rubric, Evaluation } from '@/types';
+import {
+	Service,
+	Rubric,
+	Evaluation,
+	Criteria,
+} from './types';
 
-export const testServices: Service[] = [
+export const services: Service[] = [
 	{
-		id: '1',
-		name: 'AI Content Generation',
+		_id: '1',
+		name: 'ProposalAI',
 		description:
 			'AI-powered content generation service for proposals and documents',
-		category: 'AI',
+		type: 'AI',
+		features: [
+			{
+				name: 'Content Generation',
+				description:
+					'AI-powered content generation for proposals',
+				category: 'AI',
+			},
+		],
+		pricing: {
+			details: 'Subscription-based',
+			model: 'Monthly',
+		},
+		integrationCapabilities: ['API', 'Web Interface'],
+		support: {
+			channels: ['Email', 'Chat'],
+			sla: '24/7',
+			documentation: 'Comprehensive',
+		},
 		createdAt: new Date('2024-01-01').toISOString(),
 		updatedAt: new Date('2024-01-01').toISOString(),
 	},
 	{
-		id: '2',
-		name: 'Proposal Management System',
+		_id: '2',
+		name: 'ProposalPro',
 		description:
-			'Comprehensive proposal management and tracking system',
-		category: 'Software',
+			'Professional proposal management and automation platform',
+		type: 'Proposal',
+		features: [
+			{
+				name: 'Proposal Management',
+				description: 'End-to-end proposal management',
+				category: 'Management',
+			},
+		],
+		pricing: {
+			details: 'Enterprise pricing',
+			model: 'Annual',
+		},
+		integrationCapabilities: ['API', 'SSO'],
+		support: {
+			channels: ['Email', 'Phone', 'Chat'],
+			sla: 'Business hours',
+			documentation: 'Enterprise',
+		},
 		createdAt: new Date('2024-01-02').toISOString(),
 		updatedAt: new Date('2024-01-02').toISOString(),
 	},
 	{
-		id: '3',
-		name: 'Document Review Service',
+		_id: '3',
+		name: 'DocReview',
 		description:
 			'Professional document review and editing service',
-		category: 'Services',
+		type: 'Hybrid',
+		features: [
+			{
+				name: 'Document Review',
+				description:
+					'AI-assisted document review and editing',
+				category: 'Review',
+			},
+		],
+		pricing: {
+			details: 'Pay-per-use',
+			model: 'Usage-based',
+		},
+		integrationCapabilities: [
+			'API',
+			'Web Interface',
+			'Desktop App',
+		],
+		support: {
+			channels: [
+				'Email',
+				'Phone',
+				'Chat',
+				'Support Portal',
+			],
+			sla: '24/7',
+			documentation: 'Comprehensive',
+		},
 		createdAt: new Date('2024-01-03').toISOString(),
 		updatedAt: new Date('2024-01-03').toISOString(),
 	},
 ];
 
-export const testRubrics: Rubric[] = [
+export const rubrics: Rubric[] = [
 	{
-		id: '1',
+		_id: '1',
 		name: 'AI Service Evaluation',
 		description:
 			'Evaluation criteria for AI-powered services',
+		serviceType: 'AI',
 		criteria: [
 			{
-				id: '1',
-				name: 'Accuracy',
-				description: 'How accurate are the results?',
+				_id: '1',
+				name: 'AI Capabilities',
+				description:
+					'Assessment of AI features and capabilities',
+				weight: 0.4,
+				subCriteria: [
+					{
+						name: 'Content Generation',
+						description:
+							'Quality and accuracy of AI-generated content',
+						scoringGuide: [
+							{ score: 5, description: 'Excellent' },
+							{ score: 3, description: 'Good' },
+							{ score: 1, description: 'Poor' },
+						],
+					},
+				],
+			},
+			{
+				_id: '2',
+				name: 'Integration',
+				description:
+					'Ease of integration with existing systems',
 				weight: 0.3,
-			},
-			{
-				id: '2',
-				name: 'Speed',
-				description: 'How fast is the service?',
-				weight: 0.2,
-			},
-			{
-				id: '3',
-				name: 'Cost',
-				description: 'Is the service cost-effective?',
-				weight: 0.2,
-			},
-			{
-				id: '4',
-				name: 'User Interface',
-				description: 'How user-friendly is the interface?',
-				weight: 0.15,
-			},
-			{
-				id: '5',
-				name: 'Support',
-				description: 'Quality of customer support',
-				weight: 0.15,
+				subCriteria: [
+					{
+						name: 'API Support',
+						description: 'Quality and documentation of API',
+						scoringGuide: [
+							{ score: 5, description: 'Excellent' },
+							{ score: 3, description: 'Good' },
+							{ score: 1, description: 'Poor' },
+						],
+					},
+				],
 			},
 		],
+		totalWeight: 1.0,
 		createdAt: new Date('2024-01-01').toISOString(),
 		updatedAt: new Date('2024-01-01').toISOString(),
 	},
 	{
-		id: '2',
-		name: 'Proposal System Evaluation',
+		_id: '2',
+		name: 'Proposal Service Evaluation',
 		description:
 			'Evaluation criteria for proposal management systems',
+		serviceType: 'Proposal',
 		criteria: [
 			{
-				id: '1',
+				_id: '1',
 				name: 'Features',
 				description: 'Completeness of features',
+				weight: 0.4,
+				subCriteria: [
+					{
+						name: 'Core Features',
+						description:
+							'Essential proposal management features',
+						scoringGuide: [
+							{ score: 5, description: 'Excellent' },
+							{ score: 3, description: 'Good' },
+							{ score: 1, description: 'Poor' },
+						],
+					},
+				],
+			},
+			{
+				_id: '2',
+				name: 'Usability',
+				description: 'Ease of use and user experience',
 				weight: 0.3,
-			},
-			{
-				id: '2',
-				name: 'Integration',
-				description: 'Ease of integration with other tools',
-				weight: 0.2,
-			},
-			{
-				id: '3',
-				name: 'Security',
-				description: 'Security features and compliance',
-				weight: 0.2,
-			},
-			{
-				id: '4',
-				name: 'Performance',
-				description: 'System performance and reliability',
-				weight: 0.15,
-			},
-			{
-				id: '5',
-				name: 'Support',
-				description: 'Quality of technical support',
-				weight: 0.15,
+				subCriteria: [
+					{
+						name: 'User Interface',
+						description:
+							'Quality and intuitiveness of the interface',
+						scoringGuide: [
+							{ score: 5, description: 'Excellent' },
+							{ score: 3, description: 'Good' },
+							{ score: 1, description: 'Poor' },
+						],
+					},
+				],
 			},
 		],
+		totalWeight: 1.0,
 		createdAt: new Date('2024-01-02').toISOString(),
 		updatedAt: new Date('2024-01-02').toISOString(),
 	},
 ];
 
-export const testEvaluations: Evaluation[] = [
+export const evaluations: Evaluation[] = [
 	{
-		id: '1',
-		serviceId: '1',
-		rubricId: '1',
+		_id: '1',
+		service: services[0],
+		rubric: rubrics[0],
+		evaluator: 'John Doe',
 		scores: [
 			{
-				criterionId: '1',
+				criteriaId: '1',
 				score: 4,
-				notes: 'Very accurate results',
+				comments: 'Strong AI capabilities',
+				evidence: 'Test results show 95% accuracy',
 			},
 			{
-				criterionId: '2',
-				score: 5,
-				notes: 'Extremely fast processing',
-			},
-			{
-				criterionId: '3',
+				criteriaId: '2',
 				score: 3,
-				notes: 'Reasonable pricing',
-			},
-			{
-				criterionId: '4',
-				score: 4,
-				notes: 'Intuitive interface',
-			},
-			{
-				criterionId: '5',
-				score: 4,
-				notes: 'Responsive support team',
+				comments: 'Good API documentation',
+				evidence:
+					'Successfully integrated with test system',
 			},
 		],
-		overallScore: 4.0,
-		notes:
-			'Overall excellent service with room for improvement in pricing',
+		overallScore: 3.5,
+		strengths: [
+			'Strong AI capabilities',
+			'Good documentation',
+		],
+		weaknesses: ['Limited customization options'],
+		recommendations: [
+			'Add more customization options',
+			'Improve API response time',
+		],
 		status: 'completed',
 		createdAt: new Date('2024-01-15').toISOString(),
 		updatedAt: new Date('2024-01-15').toISOString(),
 	},
 	{
-		id: '2',
-		serviceId: '2',
-		rubricId: '2',
+		_id: '2',
+		service: services[1],
+		rubric: rubrics[1],
+		evaluator: 'Jane Smith',
 		scores: [
 			{
-				criterionId: '1',
+				criteriaId: '1',
 				score: 5,
-				notes: 'Comprehensive feature set',
+				comments: 'Comprehensive feature set',
+				evidence: 'All required features present',
 			},
 			{
-				criterionId: '2',
+				criteriaId: '2',
 				score: 4,
-				notes: 'Good integration capabilities',
-			},
-			{
-				criterionId: '3',
-				score: 5,
-				notes: 'Excellent security features',
-			},
-			{
-				criterionId: '4',
-				score: 4,
-				notes: 'Reliable performance',
-			},
-			{
-				criterionId: '5',
-				score: 3,
-				notes: 'Support could be more responsive',
+				comments: 'Intuitive interface',
+				evidence: 'User testing shows high satisfaction',
 			},
 		],
-		overallScore: 4.2,
-		notes: 'Strong system with minor support issues',
+		overallScore: 4.5,
+		strengths: [
+			'Complete feature set',
+			'User-friendly interface',
+		],
+		weaknesses: [
+			'Steep learning curve for advanced features',
+		],
+		recommendations: [
+			'Add more training materials',
+			'Improve onboarding process',
+		],
 		status: 'completed',
 		createdAt: new Date('2024-01-16').toISOString(),
 		updatedAt: new Date('2024-01-16').toISOString(),

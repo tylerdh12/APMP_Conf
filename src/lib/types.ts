@@ -1,5 +1,6 @@
 export interface Service {
 	_id: string;
+	id?: string; // For backward compatibility
 	name: string;
 	description: string;
 	type: 'AI' | 'Proposal' | 'Hybrid';
@@ -23,6 +24,8 @@ export interface Service {
 }
 
 export interface Criteria {
+	_id: string;
+	id?: string; // For backward compatibility
 	name: string;
 	description: string;
 	weight: number;
@@ -38,6 +41,7 @@ export interface Criteria {
 
 export interface Rubric {
 	_id: string;
+	id?: string; // For backward compatibility
 	name: string;
 	description: string;
 	serviceType: 'AI' | 'Proposal' | 'Hybrid';
@@ -56,14 +60,18 @@ export interface Score {
 
 export interface Evaluation {
 	_id: string;
+	id?: string; // For backward compatibility
 	service: Service;
+	serviceId?: string; // For backward compatibility
 	rubric: Rubric;
+	rubricId?: string; // For backward compatibility
 	evaluator: string;
 	scores: Score[];
 	overallScore: number;
 	strengths: string[];
 	weaknesses: string[];
 	recommendations: string[];
+	notes?: string; // For backward compatibility
 	status: 'draft' | 'in_progress' | 'completed';
 	createdAt: string;
 	updatedAt: string;

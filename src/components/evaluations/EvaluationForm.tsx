@@ -1,15 +1,10 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+'use client';
+
 import { Button } from '@/components/ui/button';
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from '@/components/ui/form';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
 	Select,
 	SelectContent,
@@ -17,339 +12,342 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
 import {
 	Service,
 	Rubric,
 	Evaluation,
-	Criterion,
-} from '@/types';
+	Score,
+	Criteria,
+} from '@/lib/types';
 import { useState } from 'react';
+import { z } from 'zod';
 
 const evaluationSchema = z.object({
-	serviceId: z.string().min(1, 'Service is required'),
-	rubricId: z.string().min(1, 'Rubric is required'),
+	service: z.object({
+		_id: z.string(),
+		name: z.string(),
+	}),
+	rubric: z.object({
+		_id: z.string(),
+		name: z.string(),
+	}),
+	evaluator: z.string(),
 	scores: z.array(
 		z.object({
-			criterionId: z.string(),
+			criteriaId: z.string(),
 			score: z.number().min(0).max(5),
 			comments: z.string().optional(),
 			evidence: z.string().optional(),
 		})
 	),
-	strengths: z.string().optional(),
-	weaknesses: z.string().optional(),
-	recommendations: z.string().optional(),
+	strengths: z.array(z.string()),
+	weaknesses: z.array(z.string()),
+	recommendations: z.array(z.string()),
 	status: z.enum(['draft', 'in_progress', 'completed']),
 });
 
-type EvaluationFormProps = {
+type EvaluationFormData = z.infer<typeof evaluationSchema>;
+
+interface EvaluationFormProps {
 	services: Service[];
 	rubrics: Rubric[];
-	onSubmit: (
-		data: z.infer<typeof evaluationSchema>
-	) => void;
 	initialData?: Evaluation;
-};
+	onSubmit: (data: EvaluationFormData) => Promise<void>;
+}
 
 export function EvaluationForm({
 	services,
 	rubrics,
-	onSubmit,
 	initialData,
+	onSubmit,
 }: EvaluationFormProps) {
-	const [loading, setLoading] = useState(false);
-	const form = useForm<z.infer<typeof evaluationSchema>>({
-		resolver: zodResolver(evaluationSchema),
-		defaultValues: initialData || {
-			serviceId: '',
-			rubricId: '',
-			scores: [],
-			strengths: '',
-			weaknesses: '',
-			recommendations: '',
-			status: 'draft',
-		},
-	});
+	const [selectedService, setSelectedService] = useState<
+		Service | undefined
+	>(initialData?.service || undefined);
 
-	const selectedRubric = rubrics.find(
-		(r) => r.id === form.watch('rubricId')
+	const [selectedRubric, setSelectedRubric] = useState<
+		Rubric | undefined
+	>(initialData?.rubric || undefined);
+
+	const [scores, setScores] = useState<Score[]>(
+		initialData?.scores || []
 	);
 
-	if (loading) {
-		return (
-			<div className='flex items-center justify-center p-8'>
-				<Spinner size='lg' />
-			</div>
-		);
-	}
+	const [status, setStatus] = useState<
+		'draft' | 'in_progress' | 'completed'
+	>(initialData?.status || 'draft');
+
+	const [strengths, setStrengths] = useState<string[]>(
+		initialData?.strengths || []
+	);
+
+	const [weaknesses, setWeaknesses] = useState<string[]>(
+		initialData?.weaknesses || []
+	);
+
+	const [recommendations, setRecommendations] = useState<
+		string[]
+	>(initialData?.recommendations || []);
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		if (!selectedService || !selectedRubric) {
+			console.error('Service and Rubric are required');
+			return;
+		}
+
+		const data: EvaluationFormData = {
+			service: {
+				_id: selectedService._id,
+				name: selectedService.name,
+			},
+			rubric: {
+				_id: selectedRubric._id,
+				name: selectedRubric.name,
+			},
+			evaluator: 'current-user', // TODO: Get from auth context
+			scores,
+			strengths,
+			weaknesses,
+			recommendations,
+			status,
+		};
+
+		try {
+			const validatedData = evaluationSchema.parse(data);
+			await onSubmit(validatedData);
+		} catch (error) {
+			console.error('Validation error:', error);
+		}
+	};
 
 	return (
-		<Form {...form}>
-			<form
-				onSubmit={form.handleSubmit(onSubmit)}
-				className='space-y-8'
-			>
-				<Card>
-					<CardHeader>
-						<CardTitle>Evaluation Details</CardTitle>
-					</CardHeader>
-					<CardContent className='space-y-4'>
-						<FormField
-							control={form.control}
-							name='serviceId'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Service</FormLabel>
-									<Select
-										onValueChange={field.onChange}
-										defaultValue={field.value}
+		<form onSubmit={handleSubmit}>
+			<Card>
+				<CardContent className='space-y-4 p-4'>
+					<div className='space-y-2'>
+						<Label htmlFor='service'>Service</Label>
+						<Select
+							name='service'
+							value={selectedService?._id}
+							onValueChange={(value) => {
+								const service = services.find(
+									(s) => s._id === value
+								);
+								setSelectedService(service);
+							}}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder='Select a service' />
+							</SelectTrigger>
+							<SelectContent>
+								{services.map((service) => (
+									<SelectItem
+										key={service._id}
+										value={service._id}
 									>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder='Select a service' />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{services.map((service) => (
-												<SelectItem
-													key={service.id}
-													value={service.id}
-												>
-													{service.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+										{service.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
 
-						<FormField
-							control={form.control}
-							name='rubricId'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Rubric</FormLabel>
-									<Select
-										onValueChange={field.onChange}
-										defaultValue={field.value}
+					<div className='space-y-2'>
+						<Label htmlFor='rubric'>Rubric</Label>
+						<Select
+							name='rubric'
+							value={selectedRubric?._id}
+							onValueChange={(value) => {
+								const rubric = rubrics.find(
+									(r) => r._id === value
+								);
+								setSelectedRubric(rubric);
+								if (rubric) {
+									setScores(
+										rubric.criteria.map((c) => ({
+											criteriaId: c._id,
+											score: 0,
+											comments: '',
+											evidence: '',
+										}))
+									);
+								}
+							}}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder='Select a rubric' />
+							</SelectTrigger>
+							<SelectContent>
+								{rubrics.map((rubric) => (
+									<SelectItem
+										key={rubric._id}
+										value={rubric._id}
 									>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder='Select a rubric' />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{rubrics.map((rubric) => (
-												<SelectItem
-													key={rubric.id}
-													value={rubric.id}
-												>
-													{rubric.name}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</CardContent>
-				</Card>
+										{rubric.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
 
-				{selectedRubric && (
-					<Card>
-						<CardHeader>
-							<CardTitle>Criteria Scores</CardTitle>
-						</CardHeader>
-						<CardContent className='space-y-4'>
+					{selectedRubric && (
+						<div className='space-y-4'>
 							{selectedRubric.criteria.map(
 								(criterion, index) => (
 									<div
-										key={criterion.id}
-										className='space-y-4'
+										key={criterion._id}
+										className='space-y-2'
 									>
-										<h3 className='font-medium'>
-											{criterion.name}
-										</h3>
-										<div className='grid gap-4'>
-											<FormField
-												control={form.control}
-												name={`scores.${index}.score`}
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel>
-															Score (0-5)
-														</FormLabel>
-														<FormControl>
-															<Input
-																type='number'
-																min={0}
-																max={5}
-																value={field.value || ''}
-																onChange={(e) =>
-																	field.onChange(
-																		Number(e.target.value)
-																	)
-																}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
+										<Label>{criterion.name}</Label>
+										<div className='flex gap-4'>
+											<Input
+												type='number'
+												min='0'
+												max='5'
+												value={
+													scores.find(
+														(s) =>
+															s.criteriaId === criterion._id
+													)?.score || ''
+												}
+												onChange={(e) => {
+													const newScores = [...scores];
+													const scoreIndex =
+														newScores.findIndex(
+															(s) =>
+																s.criteriaId ===
+																criterion._id
+														);
+													if (scoreIndex >= 0) {
+														newScores[scoreIndex] = {
+															...newScores[scoreIndex],
+															score: parseInt(
+																e.target.value
+															),
+														};
+													} else {
+														newScores.push({
+															criteriaId: criterion._id,
+															score: parseInt(
+																e.target.value
+															),
+															comments: '',
+															evidence: '',
+														});
+													}
+													setScores(newScores);
+												}}
+												className='w-20'
 											/>
-
-											<FormField
-												control={form.control}
-												name={`scores.${index}.comments`}
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel>Comments</FormLabel>
-														<FormControl>
-															<Textarea
-																value={field.value || ''}
-																onChange={field.onChange}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-
-											<FormField
-												control={form.control}
-												name={`scores.${index}.evidence`}
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel>Evidence</FormLabel>
-														<FormControl>
-															<Textarea
-																value={field.value || ''}
-																onChange={field.onChange}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
+											<Textarea
+												value={
+													scores.find(
+														(s) =>
+															s.criteriaId === criterion._id
+													)?.comments || ''
+												}
+												onChange={(e) => {
+													const newScores = [...scores];
+													const scoreIndex =
+														newScores.findIndex(
+															(s) =>
+																s.criteriaId ===
+																criterion._id
+														);
+													if (scoreIndex >= 0) {
+														newScores[scoreIndex] = {
+															...newScores[scoreIndex],
+															comments: e.target.value,
+														};
+													} else {
+														newScores.push({
+															criteriaId: criterion._id,
+															score: 0,
+															comments: e.target.value,
+															evidence: '',
+														});
+													}
+													setScores(newScores);
+												}}
+												placeholder='Comments'
+												className='flex-1'
 											/>
 										</div>
 									</div>
 								)
 							)}
-						</CardContent>
-					</Card>
-				)}
+						</div>
+					)}
 
-				<Card>
-					<CardHeader>
-						<CardTitle>Additional Information</CardTitle>
-					</CardHeader>
-					<CardContent className='space-y-4'>
-						<FormField
-							control={form.control}
-							name='strengths'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Strengths</FormLabel>
-									<FormControl>
-										<Textarea
-											value={field.value || ''}
-											onChange={field.onChange}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+					<div className='space-y-2'>
+						<Label>Strengths</Label>
+						<Textarea
+							value={strengths.join('\n')}
+							onChange={(e) =>
+								setStrengths(
+									e.target.value.split('\n').filter(Boolean)
+								)
+							}
+							placeholder='Enter strengths (one per line)'
 						/>
+					</div>
 
-						<FormField
-							control={form.control}
-							name='weaknesses'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Weaknesses</FormLabel>
-									<FormControl>
-										<Textarea
-											value={field.value || ''}
-											onChange={field.onChange}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+					<div className='space-y-2'>
+						<Label>Weaknesses</Label>
+						<Textarea
+							value={weaknesses.join('\n')}
+							onChange={(e) =>
+								setWeaknesses(
+									e.target.value.split('\n').filter(Boolean)
+								)
+							}
+							placeholder='Enter weaknesses (one per line)'
 						/>
+					</div>
 
-						<FormField
-							control={form.control}
-							name='recommendations'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Recommendations</FormLabel>
-									<FormControl>
-										<Textarea
-											value={field.value || ''}
-											onChange={field.onChange}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+					<div className='space-y-2'>
+						<Label>Recommendations</Label>
+						<Textarea
+							value={recommendations.join('\n')}
+							onChange={(e) =>
+								setRecommendations(
+									e.target.value.split('\n').filter(Boolean)
+								)
+							}
+							placeholder='Enter recommendations (one per line)'
 						/>
+					</div>
 
-						<FormField
-							control={form.control}
-							name='status'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Status</FormLabel>
-									<Select
-										onValueChange={field.onChange}
-										defaultValue={field.value}
-									>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder='Select status' />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											<SelectItem value='draft'>
-												Draft
-											</SelectItem>
-											<SelectItem value='in_progress'>
-												In Progress
-											</SelectItem>
-											<SelectItem value='completed'>
-												Completed
-											</SelectItem>
-										</SelectContent>
-									</Select>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</CardContent>
-				</Card>
+					<div className='space-y-2'>
+						<Label>Status</Label>
+						<Select
+							value={status}
+							onValueChange={(value: typeof status) =>
+								setStatus(value)
+							}
+						>
+							<SelectTrigger>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value='draft'>Draft</SelectItem>
+								<SelectItem value='in_progress'>
+									In Progress
+								</SelectItem>
+								<SelectItem value='completed'>
+									Completed
+								</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 
-				<Button
-					type='submit'
-					className='w-full'
-				>
-					{initialData
-						? 'Update Evaluation'
-						: 'Create Evaluation'}
-				</Button>
-			</form>
-		</Form>
+					<Button type='submit'>
+						{initialData ? 'Update' : 'Create'} Evaluation
+					</Button>
+				</CardContent>
+			</Card>
+		</form>
 	);
 }

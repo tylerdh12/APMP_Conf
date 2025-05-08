@@ -6,7 +6,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/components/ui/card';
-import { Evaluation, Service, Rubric } from '@/types';
+import {
+	Evaluation,
+	Service,
+	Rubric,
+	Score,
+} from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 
 interface EvaluationDetailProps {
@@ -27,7 +32,9 @@ export function EvaluationDetail({
 					Evaluation Details
 				</h2>
 				<div className='flex space-x-2'>
-					<Link href={`/evaluations/${evaluation.id}/edit`}>
+					<Link
+						href={`/evaluations/${evaluation._id}/edit`}
+					>
 						<Button>Edit Evaluation</Button>
 					</Link>
 					<Link href='/evaluations'>
@@ -38,40 +45,36 @@ export function EvaluationDetail({
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Basic Information</CardTitle>
+					<CardTitle>Service Information</CardTitle>
 				</CardHeader>
 				<CardContent className='space-y-4'>
-					<div className='grid grid-cols-2 gap-4'>
-						<div>
-							<h3 className='font-medium'>Service</h3>
-							<p>{service.name}</p>
-						</div>
-						<div>
-							<h3 className='font-medium'>Rubric</h3>
-							<p>{rubric.name}</p>
-						</div>
-						<div>
-							<h3 className='font-medium'>Status</h3>
-							<span
-								className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-									evaluation.status === 'completed'
-										? 'bg-green-100 text-green-800'
-										: evaluation.status === 'in_progress'
-										? 'bg-yellow-100 text-yellow-800'
-										: 'bg-gray-100 text-gray-800'
-								}`}
-							>
-								{evaluation.status}
-							</span>
-						</div>
-						<div>
-							<h3 className='font-medium'>Created</h3>
-							<p>{formatDate(evaluation.createdAt)}</p>
-						</div>
-						<div>
-							<h3 className='font-medium'>Updated</h3>
-							<p>{formatDate(evaluation.updatedAt)}</p>
-						</div>
+					<div>
+						<h3 className='font-medium'>Name</h3>
+						<p>{service.name}</p>
+					</div>
+					<div>
+						<h3 className='font-medium'>Description</h3>
+						<p>{service.description}</p>
+					</div>
+					<div>
+						<h3 className='font-medium'>Type</h3>
+						<p>{service.type}</p>
+					</div>
+					<div>
+						<h3 className='font-medium'>Support</h3>
+						<p>{service.support.channels.join(', ')}</p>
+					</div>
+					<div>
+						<h3 className='font-medium'>Status</h3>
+						<p>{evaluation.status}</p>
+					</div>
+					<div>
+						<h3 className='font-medium'>Created</h3>
+						<p>{formatDate(evaluation.createdAt)}</p>
+					</div>
+					<div>
+						<h3 className='font-medium'>Last Updated</h3>
+						<p>{formatDate(evaluation.updatedAt)}</p>
 					</div>
 				</CardContent>
 			</Card>
@@ -81,13 +84,13 @@ export function EvaluationDetail({
 					<CardTitle>Criteria Scores</CardTitle>
 				</CardHeader>
 				<CardContent className='space-y-6'>
-					{rubric.criteria.map((criterion) => {
+					{rubric.criteria.map((criterion, index) => {
 						const score = evaluation.scores.find(
-							(s) => s.criterionId === criterion.id
+							(s) => s.criteriaId === criterion._id
 						);
 						return (
 							<div
-								key={criterion.id}
+								key={index}
 								className='space-y-2'
 							>
 								<h3 className='font-medium'>
@@ -137,13 +140,13 @@ export function EvaluationDetail({
 					{evaluation.strengths && (
 						<div>
 							<h3 className='font-medium'>Strengths</h3>
-							<p>{evaluation.strengths}</p>
+							<p>{evaluation.strengths.join('\n')}</p>
 						</div>
 					)}
 					{evaluation.weaknesses && (
 						<div>
 							<h3 className='font-medium'>Weaknesses</h3>
-							<p>{evaluation.weaknesses}</p>
+							<p>{evaluation.weaknesses.join('\n')}</p>
 						</div>
 					)}
 					{evaluation.recommendations && (
@@ -151,7 +154,7 @@ export function EvaluationDetail({
 							<h3 className='font-medium'>
 								Recommendations
 							</h3>
-							<p>{evaluation.recommendations}</p>
+							<p>{evaluation.recommendations.join('\n')}</p>
 						</div>
 					)}
 				</CardContent>

@@ -1,10 +1,41 @@
 import axios from 'axios';
-import { Service, Rubric, Evaluation } from '@/types';
+import { Service, Rubric, Evaluation } from '@/lib/types';
 import {
-	testServices,
-	testRubrics,
-	testEvaluations,
+	services,
+	rubrics,
+	evaluations,
 } from './test-data';
+
+export type CreateEvaluationData = {
+	service: {
+		_id: string;
+		name: string;
+	};
+	rubric: {
+		_id: string;
+		name: string;
+	};
+	evaluator: string;
+	scores: {
+		criteriaId: string;
+		score: number;
+		comments?: string;
+		evidence?: string;
+	}[];
+	strengths: string[];
+	weaknesses: string[];
+	recommendations: string[];
+	status: 'draft' | 'in_progress' | 'completed';
+	overallScore?: number;
+};
+
+type ApiEvaluation = Omit<
+	Evaluation,
+	'service' | 'rubric'
+> & {
+	service: string;
+	rubric: string;
+};
 
 const api = axios.create({
 	baseURL:
@@ -49,7 +80,7 @@ export const apiClient = {
 	},
 
 	createService: async (
-		data: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>
+		data: Omit<Service, '_id' | 'createdAt' | 'updatedAt'>
 	): Promise<Service | null> => {
 		try {
 			const response = await api.post('/services', data);
@@ -108,7 +139,7 @@ export const apiClient = {
 	},
 
 	createRubric: async (
-		data: Omit<Rubric, 'id' | 'createdAt' | 'updatedAt'>
+		data: Omit<Rubric, '_id' | 'createdAt' | 'updatedAt'>
 	): Promise<Rubric | null> => {
 		try {
 			const response = await api.post('/rubrics', data);
@@ -172,10 +203,29 @@ export const apiClient = {
 	},
 
 	createEvaluation: async (
-		data: Omit<Evaluation, 'id' | 'createdAt' | 'updatedAt'>
+		data: CreateEvaluationData
 	): Promise<Evaluation | null> => {
 		try {
-			const response = await api.post('/evaluations', data);
+			// Transform the data to match the API's expected format
+			const apiData: Omit<
+				ApiEvaluation,
+				'_id' | 'createdAt' | 'updatedAt'
+			> = {
+				service: data.service._id,
+				rubric: data.rubric._id,
+				evaluator: data.evaluator,
+				scores: data.scores,
+				overallScore: data.overallScore || 0,
+				strengths: data.strengths,
+				weaknesses: data.weaknesses,
+				recommendations: data.recommendations,
+				status: data.status,
+			};
+
+			const response = await api.post(
+				'/evaluations',
+				apiData
+			);
 			return response.data;
 		} catch (error) {
 			console.error('Error creating evaluation:', error);
@@ -185,12 +235,35 @@ export const apiClient = {
 
 	updateEvaluation: async (
 		id: string,
-		data: Partial<Evaluation>
+		data: Partial<CreateEvaluationData>
 	): Promise<Evaluation | null> => {
 		try {
+			// Transform the data to match the API's expected format
+			const apiData: Partial<ApiEvaluation> = {
+				...(data.service && { service: data.service._id }),
+				...(data.rubric && { rubric: data.rubric._id }),
+				...(data.evaluator && {
+					evaluator: data.evaluator,
+				}),
+				...(data.scores && { scores: data.scores }),
+				...(data.overallScore && {
+					overallScore: data.overallScore,
+				}),
+				...(data.strengths && {
+					strengths: data.strengths,
+				}),
+				...(data.weaknesses && {
+					weaknesses: data.weaknesses,
+				}),
+				...(data.recommendations && {
+					recommendations: data.recommendations,
+				}),
+				...(data.status && { status: data.status }),
+			};
+
 			const response = await api.put(
 				`/evaluations/${id}`,
-				data
+				apiData
 			);
 			return response.data;
 		} catch (error) {
@@ -220,49 +293,49 @@ export const apiClient = {
 
 // Services
 export async function getServices(): Promise<Service[]> {
-	return testServices;
+	return services;
 }
 
 export async function getService(
 	id: string
 ): Promise<Service | undefined> {
-	return testServices.find((service) => service.id === id);
+	return services.find((service) => service._id === id);
 }
 
 export async function createService(
-	service: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>
+	service: Omit<Service, '_id' | 'createdAt' | 'updatedAt'>
 ): Promise<Service> {
 	const newService: Service = {
 		...service,
-		id: String(testServices.length + 1),
+		_id: String(services.length + 1),
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
 	};
-	testServices.push(newService);
+	services.push(newService);
 	return newService;
 }
 
 // Rubrics
 export async function getRubrics(): Promise<Rubric[]> {
-	return testRubrics;
+	return rubrics;
 }
 
 export async function getRubric(
 	id: string
 ): Promise<Rubric | undefined> {
-	return testRubrics.find((rubric) => rubric.id === id);
+	return rubrics.find((rubric) => rubric._id === id);
 }
 
 export async function createRubric(
-	rubric: Omit<Rubric, 'id' | 'createdAt' | 'updatedAt'>
+	rubric: Omit<Rubric, '_id' | 'createdAt' | 'updatedAt'>
 ): Promise<Rubric> {
 	const newRubric: Rubric = {
 		...rubric,
-		id: String(testRubrics.length + 1),
+		_id: String(rubrics.length + 1),
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
 	};
-	testRubrics.push(newRubric);
+	rubrics.push(newRubric);
 	return newRubric;
 }
 
@@ -270,30 +343,30 @@ export async function createRubric(
 export async function getEvaluations(): Promise<
 	Evaluation[]
 > {
-	return testEvaluations;
+	return evaluations;
 }
 
 export async function getEvaluation(
 	id: string
 ): Promise<Evaluation | undefined> {
-	return testEvaluations.find(
-		(evaluation) => evaluation.id === id
+	return evaluations.find(
+		(evaluation) => evaluation._id === id
 	);
 }
 
 export async function createEvaluation(
 	evaluation: Omit<
 		Evaluation,
-		'id' | 'createdAt' | 'updatedAt'
+		'_id' | 'createdAt' | 'updatedAt'
 	>
 ): Promise<Evaluation> {
 	const newEvaluation: Evaluation = {
 		...evaluation,
-		id: String(testEvaluations.length + 1),
+		_id: String(evaluations.length + 1),
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
 	};
-	testEvaluations.push(newEvaluation);
+	evaluations.push(newEvaluation);
 	return newEvaluation;
 }
 
@@ -301,16 +374,14 @@ export async function updateEvaluation(
 	id: string,
 	evaluation: Partial<Evaluation>
 ): Promise<Evaluation | undefined> {
-	const index = testEvaluations.findIndex(
-		(e) => e.id === id
-	);
+	const index = evaluations.findIndex((e) => e._id === id);
 	if (index === -1) return undefined;
 
 	const updatedEvaluation = {
-		...testEvaluations[index],
+		...evaluations[index],
 		...evaluation,
 		updatedAt: new Date().toISOString(),
 	};
-	testEvaluations[index] = updatedEvaluation;
+	evaluations[index] = updatedEvaluation;
 	return updatedEvaluation;
 }
